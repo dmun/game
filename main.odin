@@ -8,9 +8,7 @@ import SDL "vendor:sdl2"
 GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
-vertex := []f32{0.75, 0.75, 0.0, 1.0, 0.75, -0.75, 0.0, 1.0, -0.75, -0.75, 0.0, 1.0}
-vert := string(#load("vert.glsl"))
-frag := string(#load("frag.glsl"))
+vertices := []f32{0.75, 0.75, 0.0, 0.75, -0.75, 0.0, -0.75, -0.75, 0.0, -0.75, 0.75, 0.0}
 
 main :: proc() {
 	WINDOW_WIDTH :: 854
@@ -25,7 +23,7 @@ main :: proc() {
 		SDL.WINDOWPOS_CENTERED,
 		WINDOW_WIDTH,
 		WINDOW_HEIGHT,
-		{.OPENGL},
+		SDL.WINDOW_OPENGL | SDL.WINDOW_RESIZABLE,
 	)
 	assert(window != nil, SDL.GetErrorString())
 	defer SDL.DestroyWindow(window)
@@ -39,31 +37,48 @@ main :: proc() {
 
 	gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 
+	vert := string(#load("vert.glsl"))
+	frag := string(#load("frag.glsl"))
+
 	program, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
 		fmt.eprintln("Failed to create GLSL program")
 		return
 	}
 
-	pbo: u32
-	gl.GenBuffers(1, &pbo)
-	defer gl.DeleteBuffers(1, &pbo)
-	gl.BindBuffer(gl.ARRAY_BUFFER, pbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertex) * size_of(f32), raw_data(vertex), gl.STATIC_DRAW)
-	gl.BindBuffer(gl.ARRAY_BUFFER, 0)
-
 	vao: u32
 	gl.GenVertexArrays(1, &vao)
 	defer gl.DeleteVertexArrays(1, &vao)
+
+	vbo: u32
+	gl.GenBuffers(1, &vbo)
+	defer gl.DeleteBuffers(1, &vbo)
+
+	ebo: u32
+	gl.GenBuffers(1, &ebo)
+	defer gl.DeleteBuffers(1, &ebo)
+
 	gl.BindVertexArray(vao)
 
-	gl.UseProgram(program)
-	defer gl.DeleteProgram(program)
+	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
+	gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(vertices[0]), raw_data(vertices), gl.STATIC_DRAW)
 
-	gl.BindBuffer(gl.ARRAY_BUFFER, pbo)
+	indices := []u32{0, 1, 3, 1, 2, 3}
+
+	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+	gl.BufferData(
+		gl.ELEMENT_ARRAY_BUFFER,
+		len(indices) * size_of(indices[0]),
+		raw_data(indices),
+		gl.STATIC_DRAW,
+	)
+
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
-	gl.VertexAttribPointer(0, 4, gl.FLOAT, gl.FALSE, 0, 0)
+
+	gl.ClearColor(0, 0, 0, 0)
+	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	loop: for {
 		event: SDL.Event
@@ -79,10 +94,14 @@ main :: proc() {
 			}
 		}
 
+		gl.UseProgram(program)
+		defer gl.DeleteProgram(program)
+
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-		gl.ClearColor(0, 0, 0, 0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
-		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+		// gl.DrawArrays(gl.TRIANGLES, 0, 3)
+		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
+		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 		SDL.GL_SwapWindow(window)
 	}

@@ -5,22 +5,23 @@ import "core:io"
 import "core:math"
 import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
+import IMG "vendor:sdl2/image"
 
 GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
 // odinfmt: disable
 vertices := [?]f32{
-	0.75,   0.75, 0.0, 1, 0, 0,
-	0.75,  -0.75, 0.0, 0, 1, 0,
-	-0.75, -0.75, 0.0, 0, 0, 1,
-	-0.75,  0.75, 0.0, 1, 0, 0,
+	0.75,   0.75, 0.0,  1, 0, 0,  1, 1,
+	0.75,  -0.75, 0.0,  0, 1, 0,  1, 0,
+	-0.75, -0.75, 0.0,  0, 0, 1,  0, 0,
+	-0.75,  0.75, 0.0,  1, 1, 0,  0, 1,
 }
 // odinfmt: enable
 
 main :: proc() {
-	WINDOW_WIDTH :: 854
-	WINDOW_HEIGHT :: 480
+	WINDOW_WIDTH :: 1280
+	WINDOW_HEIGHT :: 720
 
 	SDL.Init({.VIDEO})
 	defer SDL.Quit()
@@ -76,13 +77,50 @@ main :: proc() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 3 * size_of(f32))
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 3 * size_of(f32))
 	gl.EnableVertexAttribArray(1)
 	defer gl.DisableVertexAttribArray(1)
+
+	gl.VertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 6 * size_of(f32))
+	gl.EnableVertexAttribArray(2)
+	defer gl.DisableVertexAttribArray(2)
+
+	IMG.Init({.JPG, .PNG})
+	defer IMG.Quit()
+
+	texture: u32
+	gl.GenTextures(1, &texture)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	surface := SDL.ConvertSurfaceFormat(IMG.Load("swgcat.jpg"), u32(SDL.PixelFormatEnum.RGB24), 0)
+
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGB,
+		surface.w,
+		surface.h,
+		0,
+		gl.RGB,
+		gl.UNSIGNED_BYTE,
+		surface.pixels,
+	)
+	gl.GenerateMipmap(gl.TEXTURE_2D)
+
+	gl.ActiveTexture(gl.TEXTURE0)
+	gl.BindTexture(gl.TEXTURE_2D, texture)
+
+	gl.UseProgram(program)
+	gl.Uniform1i(gl.GetUniformLocation(program, "ourTexture"), 0)
 
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
@@ -104,8 +142,8 @@ main :: proc() {
 		gl.UseProgram(program)
 		defer gl.DeleteProgram(program)
 
-		uniform := gl.GetUniformLocation(program, "ourOffset")
-		gl.Uniform1f(uniform, 0.5)
+		// uniform := gl.GetUniformLocation(program, "ourOffset")
+		// gl.Uniform1f(uniform, 0)
 
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
@@ -114,5 +152,9 @@ main :: proc() {
 		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 		SDL.GL_SwapWindow(window)
+	}
+
+	if gl.GetError() != gl.NO_ERROR {
+		fmt.eprintln("error: ", gl.get_last_error_message())
 	}
 }

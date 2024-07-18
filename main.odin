@@ -2,13 +2,21 @@ package main
 
 import "core:fmt"
 import "core:io"
+import "core:math"
 import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
 
 GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
-vertices := []f32{0.75, 0.75, 0.0, 0.75, -0.75, 0.0, -0.75, -0.75, 0.0, -0.75, 0.75, 0.0}
+// odinfmt: disable
+vertices := [?]f32{
+	0.75,   0.75, 0.0, 1, 0, 0,
+	0.75,  -0.75, 0.0, 0, 1, 0,
+	-0.75, -0.75, 0.0, 0, 0, 1,
+	-0.75,  0.75, 0.0, 1, 0, 0,
+}
+// odinfmt: enable
 
 main :: proc() {
 	WINDOW_WIDTH :: 854
@@ -37,8 +45,8 @@ main :: proc() {
 
 	gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 
-	vert := string(#load("vert.glsl"))
-	frag := string(#load("frag.glsl"))
+	vert := string(#load("shader.vert.glsl"))
+	frag := string(#load("shader.frag.glsl"))
 
 	program, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
@@ -61,24 +69,23 @@ main :: proc() {
 	gl.BindVertexArray(vao)
 
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
-	gl.BufferData(gl.ARRAY_BUFFER, len(vertices) * size_of(vertices[0]), raw_data(vertices), gl.STATIC_DRAW)
+	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices), &vertices, gl.STATIC_DRAW)
 
-	indices := []u32{0, 1, 3, 1, 2, 3}
+	indices := [?]u32{0, 1, 3, 1, 2, 3}
 
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-	gl.BufferData(
-		gl.ELEMENT_ARRAY_BUFFER,
-		len(indices) * size_of(indices[0]),
-		raw_data(indices),
-		gl.STATIC_DRAW,
-	)
+	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
-	gl.ClearColor(0, 0, 0, 0)
-	gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 3 * size_of(f32))
+	gl.EnableVertexAttribArray(1)
+	defer gl.DisableVertexAttribArray(1)
+
+	gl.ClearColor(0.1, 0.1, 0.1, 1)
+	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	loop: for {
 		event: SDL.Event
@@ -96,6 +103,9 @@ main :: proc() {
 
 		gl.UseProgram(program)
 		defer gl.DeleteProgram(program)
+
+		uniform := gl.GetUniformLocation(program, "ourOffset")
+		gl.Uniform1f(uniform, 0.5)
 
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT)

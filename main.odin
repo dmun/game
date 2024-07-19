@@ -3,6 +3,8 @@ package main
 import "core:fmt"
 import "core:io"
 import "core:math"
+import "core:math/linalg"
+import glm "core:math/linalg/glsl"
 import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
 import IMG "vendor:sdl2/image"
@@ -20,8 +22,8 @@ vertices := [?]f32{
 // odinfmt: enable
 
 main :: proc() {
-	WINDOW_WIDTH :: 1280
-	WINDOW_HEIGHT :: 720
+	WINDOW_WIDTH :: 800
+	WINDOW_HEIGHT :: 600
 
 	SDL.Init({.VIDEO})
 	defer SDL.Quit()
@@ -144,6 +146,12 @@ main :: proc() {
 
 		// uniform := gl.GetUniformLocation(program, "ourOffset")
 		// gl.Uniform1f(uniform, 0)
+
+		trans := glm.identity(glm.mat4)
+		trans *= glm.mat4Translate({0.5, -0.5, 0.5})
+		trans *= glm.mat4Scale({0.5, 0.5, 0.5})
+		trans *= glm.mat4Rotate({0, 0, 1}, glm.radians_f32(f32(SDL.GetTicks() / 10)))
+		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "transform"), 1, gl.FALSE, &trans[0, 0])
 
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT)

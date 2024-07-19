@@ -214,10 +214,10 @@ main :: proc() {
 		state := SDL.GetKeyboardState(nil)
 		speed := f32(5)
 		if state[SDL.Scancode.W] == 1 {
-			camera_pos += camera_direction * speed * dt * vec3{1, 0, 1}
+			camera_pos += glm.normalize_vec3({camera_direction.x, 0, camera_direction.z}) * speed * dt
 		}
 		if state[SDL.Scancode.S] == 1 {
-			camera_pos -= camera_direction * speed * dt * vec3{1, 0, 1}
+			camera_pos -= glm.normalize_vec3({camera_direction.x, 0, camera_direction.z}) * speed * dt
 		}
 		if state[SDL.Scancode.A] == 1 {
 			camera_pos += camera_right * speed * dt

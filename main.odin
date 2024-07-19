@@ -193,7 +193,7 @@ main :: proc() {
 
 	camera_direction: vec3
 	camera_right: vec3
-	yaw: f32 = -90
+	yaw: f32 = 90
 	pitch: f32
 
 	SDL.ShowCursor(0)
@@ -212,12 +212,12 @@ main :: proc() {
 		last_tick = ticks
 
 		state := SDL.GetKeyboardState(nil)
-		speed := f32(10)
+		speed := f32(5)
 		if state[SDL.Scancode.W] == 1 {
-			camera_pos += camera_direction * speed * dt
+			camera_pos += camera_direction * speed * dt * vec3{1, 0, 1}
 		}
 		if state[SDL.Scancode.S] == 1 {
-			camera_pos -= camera_direction * speed * dt
+			camera_pos -= camera_direction * speed * dt * vec3{1, 0, 1}
 		}
 		if state[SDL.Scancode.A] == 1 {
 			camera_pos += camera_right * speed * dt

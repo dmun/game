@@ -13,17 +13,61 @@ GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
 // odinfmt: disable
-vertices := [?]f32{
+_vertices := [?]f32{
 	0.75,   0.75, 0.0,  1, 0, 0,  1, 1,
 	0.75,  -0.75, 0.0,  0, 1, 0,  1, 0,
 	-0.75, -0.75, 0.0,  0, 0, 1,  0, 0,
 	-0.75,  0.75, 0.0,  1, 1, 0,  0, 1,
 }
+
+vertices := [?]f32{
+    -0.5, -0.5, -0.5,  0.0, 0.0,
+     0.5, -0.5, -0.5,  1.0, 0.0,
+     0.5,  0.5, -0.5,  1.0, 1.0,
+     0.5,  0.5, -0.5,  1.0, 1.0,
+    -0.5,  0.5, -0.5,  0.0, 1.0,
+    -0.5, -0.5, -0.5,  0.0, 0.0,
+
+    -0.5, -0.5,  0.5,  0.0, 0.0,
+     0.5, -0.5,  0.5,  1.0, 0.0,
+     0.5,  0.5,  0.5,  1.0, 1.0,
+     0.5,  0.5,  0.5,  1.0, 1.0,
+    -0.5,  0.5,  0.5,  0.0, 1.0,
+    -0.5, -0.5,  0.5,  0.0, 0.0,
+
+    -0.5,  0.5,  0.5,  1.0, 0.0,
+    -0.5,  0.5, -0.5,  1.0, 1.0,
+    -0.5, -0.5, -0.5,  0.0, 1.0,
+    -0.5, -0.5, -0.5,  0.0, 1.0,
+    -0.5, -0.5,  0.5,  0.0, 0.0,
+    -0.5,  0.5,  0.5,  1.0, 0.0,
+
+     0.5,  0.5,  0.5,  1.0, 0.0,
+     0.5,  0.5, -0.5,  1.0, 1.0,
+     0.5, -0.5, -0.5,  0.0, 1.0,
+     0.5, -0.5, -0.5,  0.0, 1.0,
+     0.5, -0.5,  0.5,  0.0, 0.0,
+     0.5,  0.5,  0.5,  1.0, 0.0,
+
+    -0.5, -0.5, -0.5,  0.0, 1.0,
+     0.5, -0.5, -0.5,  1.0, 1.0,
+     0.5, -0.5,  0.5,  1.0, 0.0,
+     0.5, -0.5,  0.5,  1.0, 0.0,
+    -0.5, -0.5,  0.5,  0.0, 0.0,
+    -0.5, -0.5, -0.5,  0.0, 1.0,
+
+    -0.5,  0.5, -0.5,  0.0, 1.0,
+     0.5,  0.5, -0.5,  1.0, 1.0,
+     0.5,  0.5,  0.5,  1.0, 0.0,
+     0.5,  0.5,  0.5,  1.0, 0.0,
+    -0.5,  0.5,  0.5,  0.0, 0.0,
+    -0.5,  0.5, -0.5,  0.0, 1.0
+};
 // odinfmt: enable
 
 main :: proc() {
-	WINDOW_WIDTH :: 800
-	WINDOW_HEIGHT :: 600
+	WINDOW_WIDTH :: 1280
+	WINDOW_HEIGHT :: 720
 
 	SDL.Init({.VIDEO})
 	defer SDL.Quit()
@@ -79,17 +123,19 @@ main :: proc() {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
-	gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 3 * size_of(f32))
-	gl.EnableVertexAttribArray(1)
-	defer gl.DisableVertexAttribArray(1)
+	// gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 3 * size_of(f32))
+	// gl.EnableVertexAttribArray(1)
+	// defer gl.DisableVertexAttribArray(1)
 
-	gl.VertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 6 * size_of(f32))
+	gl.VertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 3 * size_of(f32))
 	gl.EnableVertexAttribArray(2)
 	defer gl.DisableVertexAttribArray(2)
+
+	gl.Enable(gl.DEPTH_TEST)
 
 	IMG.Init({.JPG, .PNG})
 	defer IMG.Quit()
@@ -127,6 +173,24 @@ main :: proc() {
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
+	cube_positions := []glm.vec3 {
+		{0.0, 0.0, 0.0},
+		{2.0, 5.0, -15.0},
+		{-1.5, -2.2, -2.5},
+		{-3.8, -2.0, -12.3},
+		{2.4, -0.4, -3.5},
+		{-1.7, 3.0, -7.5},
+		{1.3, -2.0, -2.5},
+		{1.5, 2.0, -2.5},
+		{1.5, 0.2, -1.5},
+		{-1.3, 1.0, -1.5},
+	}
+
+	yaw: f32
+	pitch: f32
+
+	SDL.ShowCursor(0)
+
 	loop: for {
 		event: SDL.Event
 		for SDL.PollEvent(&event) {
@@ -138,26 +202,37 @@ main :: proc() {
 				}
 			case .QUIT:
 				break loop
+			case .MOUSEMOTION:
+				yaw += f32(event.motion.xrel) * 0.1
+				pitch += f32(event.motion.yrel) * 0.1
+				pitch = math.clamp(pitch, -89, 89)
 			}
 		}
+		SDL.WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 
 		gl.UseProgram(program)
 		defer gl.DeleteProgram(program)
-
-		// uniform := gl.GetUniformLocation(program, "ourOffset")
-		// gl.Uniform1f(uniform, 0)
-
-		trans := glm.identity(glm.mat4)
-		trans *= glm.mat4Translate({0.5, -0.5, 0.5})
-		trans *= glm.mat4Scale({0.5, 0.5, 0.5})
-		trans *= glm.mat4Rotate({0, 0, 1}, glm.radians_f32(f32(SDL.GetTicks() / 10)))
-		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "transform"), 1, gl.FALSE, &trans[0, 0])
-
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
-		// gl.DrawArrays(gl.TRIANGLES, 0, 3)
-		gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-		gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
+		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+		view := glm.mat4(1)
+		view *= glm.mat4Rotate({1, 0, 0}, glm.radians(pitch))
+		view *= glm.mat4Rotate({0, 1, 0}, glm.radians(yaw))
+		view *= glm.mat4Translate({0, 0, 2})
+		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "view"), 1, gl.FALSE, &view[0, 0])
+
+		proj := glm.mat4Perspective(glm.radians(f32(90)), f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT), 0.1, 100)
+		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "projection"), 1, gl.FALSE, &proj[0, 0])
+
+		for &pos, i in &cube_positions {
+			model := glm.mat4Translate(pos)
+			angle := f32(SDL.GetTicks()) / 20.0 * f32(i)
+			model *= glm.mat4Rotate({1, 0.3, 0.5}, glm.radians(angle) / 5)
+			gl.UniformMatrix4fv(gl.GetUniformLocation(program, "model"), 1, gl.FALSE, &model[0, 0])
+			gl.DrawArrays(gl.TRIANGLES, 0, 36)
+		}
+
+		// gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 		SDL.GL_SwapWindow(window)
 	}

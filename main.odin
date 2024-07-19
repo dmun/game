@@ -9,6 +9,11 @@ import gl "vendor:OpenGL"
 import SDL "vendor:sdl2"
 import IMG "vendor:sdl2/image"
 
+vec3 :: glm.vec3
+cos :: math.cos
+sin :: math.sin
+radians :: glm.radians
+
 GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
@@ -173,7 +178,7 @@ main :: proc() {
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
-	cube_positions := []glm.vec3 {
+	cube_positions := []vec3 {
 		{0.0, 0.0, 0.0},
 		{2.0, 5.0, -15.0},
 		{-1.5, -2.2, -2.5},
@@ -186,12 +191,41 @@ main :: proc() {
 		{-1.3, 1.0, -1.5},
 	}
 
-	yaw: f32
+	camera_direction: vec3
+	camera_right: vec3
+	yaw: f32 = -90
 	pitch: f32
 
 	SDL.ShowCursor(0)
 
+	last_tick := u32(0)
+	MAX_FPS :: 250
+
+	camera_pos := vec3{0, 0, 3}
 	loop: for {
+		ticks := SDL.GetTicks()
+		t := f32(ticks) / 1000
+		dt := f32(ticks - last_tick) / 1000
+
+		fps := 1000 / f32(ticks - last_tick)
+		if fps > MAX_FPS {continue}
+		last_tick = ticks
+
+		state := SDL.GetKeyboardState(nil)
+		speed := f32(10)
+		if state[SDL.Scancode.W] == 1 {
+			camera_pos += camera_direction * speed * dt
+		}
+		if state[SDL.Scancode.S] == 1 {
+			camera_pos -= camera_direction * speed * dt
+		}
+		if state[SDL.Scancode.A] == 1 {
+			camera_pos += camera_right * speed * dt
+		}
+		if state[SDL.Scancode.D] == 1 {
+			camera_pos -= camera_right * speed * dt
+		}
+
 		event: SDL.Event
 		for SDL.PollEvent(&event) {
 			#partial switch event.type {
@@ -215,19 +249,30 @@ main :: proc() {
 		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		view := glm.mat4(1)
-		view *= glm.mat4Rotate({1, 0, 0}, glm.radians(pitch))
-		view *= glm.mat4Rotate({0, 1, 0}, glm.radians(yaw))
-		view *= glm.mat4Translate({0, 0, 2})
+		camera_direction.x = -cos(radians(yaw)) * cos(radians(pitch))
+		camera_direction.y = -sin(radians(pitch))
+		camera_direction.z = -sin(radians(yaw)) * cos(radians(pitch))
+		camera_right = glm.normalize(glm.cross(vec3{0, 1, 0}, camera_direction))
+
+		view := glm.mat4LookAt(
+			camera_pos,
+			camera_pos + camera_direction,
+			glm.cross(camera_direction, camera_right),
+		)
 		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "view"), 1, gl.FALSE, &view[0, 0])
 
-		proj := glm.mat4Perspective(glm.radians(f32(90)), f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT), 0.1, 100)
+		proj := glm.mat4Perspective(
+			radians(f32(90)),
+			f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT),
+			0.1,
+			100,
+		)
 		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "projection"), 1, gl.FALSE, &proj[0, 0])
 
 		for &pos, i in &cube_positions {
 			model := glm.mat4Translate(pos)
 			angle := f32(SDL.GetTicks()) / 20.0 * f32(i)
-			model *= glm.mat4Rotate({1, 0.3, 0.5}, glm.radians(angle) / 5)
+			model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
 			gl.UniformMatrix4fv(gl.GetUniformLocation(program, "model"), 1, gl.FALSE, &model[0, 0])
 			gl.DrawArrays(gl.TRIANGLES, 0, 36)
 		}

@@ -69,6 +69,20 @@ vertices := [?]f32{
     -0.5,  0.5,  0.5,  0.0, 0.0,
     -0.5,  0.5, -0.5,  0.0, 1.0
 };
+
+cube_positions := []vec3 {
+	{0.0, 0.0, 0.0},
+	{2.0, 5.0, -15.0},
+	{-1.5, -2.2, -2.5},
+	{-3.8, -2.0, -12.3},
+	{2.4, -0.4, -3.5},
+	{-1.7, 3.0, -7.5},
+	{1.3, -2.0, -2.5},
+	{1.5, 2.0, -2.5},
+	{1.5, 0.2, -1.5},
+	{-1.3, 1.0, -1.5},
+}
+
 // odinfmt: enable
 
 main :: proc() {
@@ -98,10 +112,10 @@ main :: proc() {
 
 	gl.load_up_to(GL_VERSION_MAJOR, GL_VERSION_MINOR, SDL.gl_set_proc_address)
 
-	vert := string(#load("shader.vert.glsl"))
-	frag := string(#load("shader.frag.glsl"))
-	lighting_vert := string(#load("light.vert.glsl"))
-	lighting_frag := string(#load("light.frag.glsl"))
+	vert := string(#load("../shader/shader.vert.glsl"))
+	frag := string(#load("../shader/shader.frag.glsl"))
+	lighting_vert := string(#load("../shader/light.vert.glsl"))
+	lighting_frag := string(#load("../shader/light.frag.glsl"))
 
 	program, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
@@ -161,7 +175,11 @@ main :: proc() {
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
 	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
 
-	surface := SDL.ConvertSurfaceFormat(IMG.Load("swgcat.jpg"), u32(SDL.PixelFormatEnum.RGB24), 0)
+	surface := SDL.ConvertSurfaceFormat(
+		IMG.Load("image/swgcat.jpg"),
+		u32(SDL.PixelFormatEnum.RGB24),
+		0,
+	)
 
 	gl.TexImage2D(
 		gl.TEXTURE_2D,
@@ -185,19 +203,6 @@ main :: proc() {
 	gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-
-	cube_positions := []vec3 {
-		{0.0, 0.0, 0.0},
-		{2.0, 5.0, -15.0},
-		{-1.5, -2.2, -2.5},
-		{-3.8, -2.0, -12.3},
-		{2.4, -0.4, -3.5},
-		{-1.7, 3.0, -7.5},
-		{1.3, -2.0, -2.5},
-		{1.5, 2.0, -2.5},
-		{1.5, 0.2, -1.5},
-		{-1.3, 1.0, -1.5},
-	}
 
 	camera: Camera
 	yaw: f32 = 90
@@ -295,37 +300,4 @@ program_set_vec3 :: proc(program: u32, location: cstring, v1, v2, v3: f32) {
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
 	gl.UniformMatrix4fv(gl.GetUniformLocation(program, location), 1, gl.FALSE, value)
-}
-
-Camera :: struct {
-	position:  vec3,
-	direction: vec3,
-	right:     vec3,
-}
-
-camera_rotate :: proc(using camera: ^Camera, pitch, yaw: f32) {
-	direction.x = -cos(radians(yaw)) * cos(radians(pitch))
-	direction.y = -sin(radians(pitch))
-	direction.z = -sin(radians(yaw)) * cos(radians(pitch))
-	right = glm.normalize(glm.cross(vec3{0, 1, 0}, direction))
-}
-
-camera_get_matrix :: proc(using camera: ^Camera) -> mat4 {
-	return glm.mat4LookAt(position, position + direction, glm.cross(direction, right))
-}
-
-camera_move :: proc(using camera: ^Camera, state: [^]u8, dt: f32) {
-	speed := f32(5)
-	if state[SDL.Scancode.W] == 1 {
-		position += glm.normalize_vec3({direction.x, 0, direction.z}) * speed * dt
-	}
-	if state[SDL.Scancode.S] == 1 {
-		position -= glm.normalize_vec3({direction.x, 0, direction.z}) * speed * dt
-	}
-	if state[SDL.Scancode.A] == 1 {
-		position += right * speed * dt
-	}
-	if state[SDL.Scancode.D] == 1 {
-		position -= right * speed * dt
-	}
 }

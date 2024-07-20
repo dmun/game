@@ -100,9 +100,16 @@ main :: proc() {
 
 	vert := string(#load("shader.vert.glsl"))
 	frag := string(#load("shader.frag.glsl"))
+	lighting_vert := string(#load("light.vert.glsl"))
+	lighting_frag := string(#load("light.frag.glsl"))
 
 	program, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
+		fmt.eprintln("Failed to create GLSL program")
+		return
+	}
+	program_l, ok := gl.load_shaders_source(lighting_vert, lighting_frag)
+	if !ok {
 		fmt.eprintln("Failed to create GLSL program")
 		return
 	}
@@ -119,19 +126,11 @@ main :: proc() {
 	gl.GenBuffers(1, &vbo)
 	defer gl.DeleteBuffers(1, &vbo)
 
-	ebo: u32
-	gl.GenBuffers(1, &ebo)
-	defer gl.DeleteBuffers(1, &ebo)
-
 	gl.BindVertexArray(vao)
-
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, size_of(vertices), &vertices, gl.STATIC_DRAW)
 
 	indices := [?]u32{0, 1, 3, 1, 2, 3}
-
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo)
-	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size_of(indices), &indices, gl.STATIC_DRAW)
 
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
@@ -143,10 +142,10 @@ main :: proc() {
 
 	light_pos := vec3{1.2, 1, 2}
 
-	// gl.BindVertexArray(light_vao)
-	// gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * size_of(f32), 0)
-	// gl.EnableVertexAttribArray(0)
-	// defer gl.DisableVertexAttribArray(0)
+	gl.BindVertexArray(light_vao)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 0)
+	gl.EnableVertexAttribArray(0)
+	defer gl.DisableVertexAttribArray(0)
 
 	gl.Enable(gl.DEPTH_TEST)
 
@@ -240,17 +239,38 @@ main :: proc() {
 			}
 		}
 
-		gl.UseProgram(program)
-		defer gl.DeleteProgram(program)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
+
+		// Lighting
+		gl.UseProgram(program_l)
+
+		model := glm.mat4Translate(light_pos)
+		model *= glm.mat4Scale(0.2)
 
 		view := camera_get_matrix(&camera)
 		aspect_ratio := f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT)
 		proj := glm.mat4Perspective(radians(90), aspect_ratio, 0.1, 100)
 
+		program_set_vec3(program_l, "objectColor", 1, 0.5, 0.31)
+		program_set_vec3(program_l, "lightColor", 1, 1, 1)
+
+		program_set_mat4(program_l, "view", &view[0, 0])
+		program_set_mat4(program_l, "projection", &proj[0, 0])
+		program_set_mat4(program_l, "model", &model[0, 0])
+
+		gl.BindVertexArray(light_vao)
+		gl.DrawArrays(gl.TRIANGLES, 0, 36)
+
+		// Cubes
+		gl.UseProgram(program)
+
+		program_set_vec3(program, "objectColor", 1, 0.5, 0.31)
+		program_set_vec3(program, "lightColor", 1, 1, 1)
+
 		program_set_mat4(program, "view", &view[0, 0])
 		program_set_mat4(program, "projection", &proj[0, 0])
 
+		gl.BindVertexArray(vao)
 		for &pos, i in &cube_positions {
 			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)
@@ -267,6 +287,10 @@ main :: proc() {
 	if gl.GetError() == gl.DEBUG_TYPE_ERROR {
 		fmt.eprintln("error: ", gl.get_last_error_message())
 	}
+}
+
+program_set_vec3 :: proc(program: u32, location: cstring, v1, v2, v3: f32) {
+	gl.Uniform3f(gl.GetUniformLocation(program, location), v1, v2, v3)
 }
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {

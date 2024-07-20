@@ -10,9 +10,10 @@ import SDL "vendor:sdl2"
 import IMG "vendor:sdl2/image"
 
 vec3 :: glm.vec3
+mat4 :: glm.mat4
 cos :: math.cos
 sin :: math.sin
-radians :: glm.radians
+radians :: glm.radians_f32
 
 GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
@@ -110,6 +111,10 @@ main :: proc() {
 	gl.GenVertexArrays(1, &vao)
 	defer gl.DeleteVertexArrays(1, &vao)
 
+	light_vao: u32
+	gl.GenVertexArrays(1, &light_vao)
+	defer gl.DeleteVertexArrays(1, &light_vao)
+
 	vbo: u32
 	gl.GenBuffers(1, &vbo)
 	defer gl.DeleteBuffers(1, &vbo)
@@ -132,13 +137,16 @@ main :: proc() {
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
-	// gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 8 * size_of(f32), 3 * size_of(f32))
-	// gl.EnableVertexAttribArray(1)
-	// defer gl.DisableVertexAttribArray(1)
-
 	gl.VertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 3 * size_of(f32))
 	gl.EnableVertexAttribArray(2)
 	defer gl.DisableVertexAttribArray(2)
+
+	light_pos := vec3{1.2, 1, 2}
+
+	// gl.BindVertexArray(light_vao)
+	// gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 3 * size_of(f32), 0)
+	// gl.EnableVertexAttribArray(0)
+	// defer gl.DisableVertexAttribArray(0)
 
 	gl.Enable(gl.DEPTH_TEST)
 
@@ -175,6 +183,7 @@ main :: proc() {
 	gl.UseProgram(program)
 	gl.Uniform1i(gl.GetUniformLocation(program, "ourTexture"), 0)
 
+	gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
 	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
@@ -191,8 +200,7 @@ main :: proc() {
 		{-1.3, 1.0, -1.5},
 	}
 
-	camera_direction: vec3
-	camera_right: vec3
+	camera: Camera
 	yaw: f32 = 90
 	pitch: f32
 
@@ -201,7 +209,6 @@ main :: proc() {
 	last_tick := u32(0)
 	MAX_FPS :: 250
 
-	camera_pos := vec3{0, 0, 3}
 	loop: for {
 		ticks := SDL.GetTicks()
 		t := f32(ticks) / 1000
@@ -212,19 +219,7 @@ main :: proc() {
 		last_tick = ticks
 
 		state := SDL.GetKeyboardState(nil)
-		speed := f32(5)
-		if state[SDL.Scancode.W] == 1 {
-			camera_pos += glm.normalize_vec3({camera_direction.x, 0, camera_direction.z}) * speed * dt
-		}
-		if state[SDL.Scancode.S] == 1 {
-			camera_pos -= glm.normalize_vec3({camera_direction.x, 0, camera_direction.z}) * speed * dt
-		}
-		if state[SDL.Scancode.A] == 1 {
-			camera_pos += camera_right * speed * dt
-		}
-		if state[SDL.Scancode.D] == 1 {
-			camera_pos -= camera_right * speed * dt
-		}
+		camera_move(&camera, state, dt)
 
 		event: SDL.Event
 		for SDL.PollEvent(&event) {
@@ -240,49 +235,73 @@ main :: proc() {
 				yaw += f32(event.motion.xrel) * 0.1
 				pitch += f32(event.motion.yrel) * 0.1
 				pitch = math.clamp(pitch, -89, 89)
+				camera_rotate(&camera, pitch, yaw)
 			}
 		}
 		SDL.WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 
 		gl.UseProgram(program)
 		defer gl.DeleteProgram(program)
-		gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		camera_direction.x = -cos(radians(yaw)) * cos(radians(pitch))
-		camera_direction.y = -sin(radians(pitch))
-		camera_direction.z = -sin(radians(yaw)) * cos(radians(pitch))
-		camera_right = glm.normalize(glm.cross(vec3{0, 1, 0}, camera_direction))
+		view := camera_get_matrix(&camera)
+		aspect_ratio := f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT)
+		proj := glm.mat4Perspective(radians(90), aspect_ratio, 0.1, 100)
 
-		view := glm.mat4LookAt(
-			camera_pos,
-			camera_pos + camera_direction,
-			glm.cross(camera_direction, camera_right),
-		)
-		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "view"), 1, gl.FALSE, &view[0, 0])
-
-		proj := glm.mat4Perspective(
-			radians(f32(90)),
-			f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT),
-			0.1,
-			100,
-		)
-		gl.UniformMatrix4fv(gl.GetUniformLocation(program, "projection"), 1, gl.FALSE, &proj[0, 0])
+		program_set_mat4(program, "view", &view[0, 0])
+		program_set_mat4(program, "projection", &proj[0, 0])
 
 		for &pos, i in &cube_positions {
+			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)
-			angle := f32(SDL.GetTicks()) / 20.0 * f32(i)
 			model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
-			gl.UniformMatrix4fv(gl.GetUniformLocation(program, "model"), 1, gl.FALSE, &model[0, 0])
+
+			program_set_mat4(program, "model", &model[0, 0])
+
 			gl.DrawArrays(gl.TRIANGLES, 0, 36)
 		}
-
-		// gl.DrawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, nil)
 
 		SDL.GL_SwapWindow(window)
 	}
 
-	if gl.GetError() != gl.NO_ERROR {
+	if gl.GetError() == gl.DEBUG_TYPE_ERROR {
 		fmt.eprintln("error: ", gl.get_last_error_message())
+	}
+}
+
+program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
+	gl.UniformMatrix4fv(gl.GetUniformLocation(program, location), 1, gl.FALSE, value)
+}
+
+Camera :: struct {
+	position:  vec3,
+	direction: vec3,
+	right:     vec3,
+}
+
+camera_rotate :: proc(using camera: ^Camera, pitch, yaw: f32) {
+	direction.x = -cos(radians(yaw)) * cos(radians(pitch))
+	direction.y = -sin(radians(pitch))
+	direction.z = -sin(radians(yaw)) * cos(radians(pitch))
+	right = glm.normalize(glm.cross(vec3{0, 1, 0}, direction))
+}
+
+camera_get_matrix :: proc(using camera: ^Camera) -> mat4 {
+	return glm.mat4LookAt(position, position + direction, glm.cross(direction, right))
+}
+
+camera_move :: proc(using camera: ^Camera, state: [^]u8, dt: f32) {
+	speed := f32(5)
+	if state[SDL.Scancode.W] == 1 {
+		position += glm.normalize_vec3({direction.x, 0, direction.z}) * speed * dt
+	}
+	if state[SDL.Scancode.S] == 1 {
+		position -= glm.normalize_vec3({direction.x, 0, direction.z}) * speed * dt
+	}
+	if state[SDL.Scancode.A] == 1 {
+		position += right * speed * dt
+	}
+	if state[SDL.Scancode.D] == 1 {
+		position -= right * speed * dt
 	}
 }

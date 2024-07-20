@@ -205,6 +205,7 @@ main :: proc() {
 	pitch: f32
 
 	SDL.ShowCursor(0)
+	SDL.SetRelativeMouseMode(true)
 
 	last_tick := u32(0)
 	MAX_FPS :: 250
@@ -238,7 +239,6 @@ main :: proc() {
 				camera_rotate(&camera, pitch, yaw)
 			}
 		}
-		SDL.WarpMouseInWindow(window, WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2)
 
 		gl.UseProgram(program)
 		defer gl.DeleteProgram(program)

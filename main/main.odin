@@ -268,8 +268,13 @@ main :: proc() {
 		program_set_mat4(program, "view", &view[0, 0])
 		program_set_mat4(program, "projection", &proj[0, 0])
 
+		light_pos.x = 2 * sin(f32(ticks) / 400)
+		light_pos.y = 2 * sin(f32(ticks) / 500)
+		light_pos.z = 2 * cos(f32(ticks) / 400)
+
 		gl.BindVertexArray(vao)
 		program_set_vec3(program, "lightPos", light_pos)
+		program_set_vec3(program, "viewPos", camera.position)
 		for &pos, i in &cube_positions {
 			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)

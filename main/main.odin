@@ -19,56 +19,49 @@ GL_VERSION_MAJOR :: 3
 GL_VERSION_MINOR :: 3
 
 // odinfmt: disable
-_vertices := [?]f32{
-	0.75,   0.75, 0.0,  1, 0, 0,  1, 1,
-	0.75,  -0.75, 0.0,  0, 1, 0,  1, 0,
-	-0.75, -0.75, 0.0,  0, 0, 1,  0, 0,
-	-0.75,  0.75, 0.0,  1, 1, 0,  0, 1,
-}
-
 vertices := [?]f32{
-    -0.5, -0.5, -0.5,  0.0, 0.0,
-     0.5, -0.5, -0.5,  1.0, 0.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 0.0,
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0,
+     0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+     0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5,  0.5, -0.5,  0.0,  0.0, -1.0, 
+    -0.5, -0.5, -0.5,  0.0,  0.0, -1.0, 
 
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 1.0,
-    -0.5,  0.5,  0.5,  0.0, 1.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
+    -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+     0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+    -0.5,  0.5,  0.5,  0.0,  0.0, 1.0,
+    -0.5, -0.5,  0.5,  0.0,  0.0, 1.0,
 
-    -0.5,  0.5,  0.5,  1.0, 0.0,
-    -0.5,  0.5, -0.5,  1.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5,  0.5,  1.0, 0.0,
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5, -0.5, -1.0,  0.0,  0.0,
+    -0.5, -0.5,  0.5, -1.0,  0.0,  0.0,
+    -0.5,  0.5,  0.5, -1.0,  0.0,  0.0,
 
-     0.5,  0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5,  0.5,  0.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5, -0.5,  1.0,  0.0,  0.0,
+     0.5, -0.5,  0.5,  1.0,  0.0,  0.0,
+     0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
 
-    -0.5, -0.5, -0.5,  0.0, 1.0,
-     0.5, -0.5, -0.5,  1.0, 1.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-     0.5, -0.5,  0.5,  1.0, 0.0,
-    -0.5, -0.5,  0.5,  0.0, 0.0,
-    -0.5, -0.5, -0.5,  0.0, 1.0,
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+     0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5,  0.5,  0.0, -1.0,  0.0,
+    -0.5, -0.5, -0.5,  0.0, -1.0,  0.0,
 
-    -0.5,  0.5, -0.5,  0.0, 1.0,
-     0.5,  0.5, -0.5,  1.0, 1.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-     0.5,  0.5,  0.5,  1.0, 0.0,
-    -0.5,  0.5,  0.5,  0.0, 0.0,
-    -0.5,  0.5, -0.5,  0.0, 1.0
-};
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5, -0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+     0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+    -0.5,  0.5, -0.5,  0.0,  1.0,  0.0
+}
 
 cube_positions := []vec3 {
 	{0.0, 0.0, 0.0},
@@ -82,7 +75,6 @@ cube_positions := []vec3 {
 	{1.5, 0.2, -1.5},
 	{-1.3, 1.0, -1.5},
 }
-
 // odinfmt: enable
 
 main :: proc() {
@@ -146,18 +138,18 @@ main :: proc() {
 
 	indices := [?]u32{0, 1, 3, 1, 2, 3}
 
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
-	gl.VertexAttribPointer(2, 2, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 3 * size_of(f32))
-	gl.EnableVertexAttribArray(2)
-	defer gl.DisableVertexAttribArray(2)
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 3 * size_of(f32))
+	gl.EnableVertexAttribArray(1)
+	defer gl.DisableVertexAttribArray(1)
 
 	light_pos := vec3{1.2, 1, 2}
 
 	gl.BindVertexArray(light_vao)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 5 * size_of(f32), 0)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, gl.FALSE, 6 * size_of(f32), 0)
 	gl.EnableVertexAttribArray(0)
 	defer gl.DisableVertexAttribArray(0)
 
@@ -258,6 +250,7 @@ main :: proc() {
 
 		program_set_vec3(program_l, "objectColor", 1, 0.5, 0.31)
 		program_set_vec3(program_l, "lightColor", 1, 1, 1)
+		program_set_vec3(program_l, "lightPos", light_pos)
 
 		program_set_mat4(program_l, "view", &view[0, 0])
 		program_set_mat4(program_l, "projection", &proj[0, 0])
@@ -276,10 +269,11 @@ main :: proc() {
 		program_set_mat4(program, "projection", &proj[0, 0])
 
 		gl.BindVertexArray(vao)
+		program_set_vec3(program, "lightPos", light_pos)
 		for &pos, i in &cube_positions {
 			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)
-			model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
+			// model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
 
 			program_set_mat4(program, "model", &model[0, 0])
 
@@ -294,9 +288,15 @@ main :: proc() {
 	}
 }
 
-program_set_vec3 :: proc(program: u32, location: cstring, v1, v2, v3: f32) {
+program_set_vec3_i3 :: proc(program: u32, location: cstring, v1, v2, v3: f32) {
 	gl.Uniform3f(gl.GetUniformLocation(program, location), v1, v2, v3)
 }
+
+program_set_vec3_vec3 :: proc(program: u32, location: cstring, v: vec3) {
+	gl.Uniform3f(gl.GetUniformLocation(program, location), v.x, v.y, v.z)
+}
+
+program_set_vec3 :: proc{program_set_vec3_i3, program_set_vec3_vec3}
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
 	gl.UniformMatrix4fv(gl.GetUniformLocation(program, location), 1, gl.FALSE, value)

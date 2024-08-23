@@ -238,6 +238,10 @@ main :: proc() {
 
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
+		light_pos.x = 2 * sin(f32(ticks) / 400)
+		light_pos.y = 2 * sin(f32(ticks) / 500)
+		light_pos.z = 2 * cos(f32(ticks) / 400)
+
 		// Lighting
 		gl.UseProgram(lighting_shader)
 
@@ -264,21 +268,17 @@ main :: proc() {
 
 		program_set_vec3(lamp_shader, "objectColor", 1, 0.5, 0.31)
 		program_set_vec3(lamp_shader, "lightColor", 1, 1, 1)
+		program_set_vec3(lamp_shader, "lightPos", light_pos)
+		program_set_vec3(lamp_shader, "viewPos", camera.position)
 
 		program_set_mat4(lamp_shader, "view", &view[0, 0])
 		program_set_mat4(lamp_shader, "projection", &proj[0, 0])
 
-		light_pos.x = 2 * sin(f32(ticks) / 400)
-		light_pos.y = 2 * sin(f32(ticks) / 500)
-		light_pos.z = 2 * cos(f32(ticks) / 400)
-
 		gl.BindVertexArray(vao)
-		program_set_vec3(lamp_shader, "lightPos", light_pos)
-		program_set_vec3(lamp_shader, "viewPos", camera.position)
 		for &pos, i in &cube_positions {
 			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)
-			// model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
+			model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
 
 			program_set_mat4(lamp_shader, "model", &model[0, 0])
 

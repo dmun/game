@@ -109,12 +109,12 @@ main :: proc() {
 	lighting_vert := string(#load("../shader/light.vert.glsl"))
 	lighting_frag := string(#load("../shader/light.frag.glsl"))
 
-	program, program_ok := gl.load_shaders_source(vert, frag)
+	lamp_shader, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
 		fmt.eprintln("Failed to create GLSL program")
 		return
 	}
-	program_l, ok := gl.load_shaders_source(lighting_vert, lighting_frag)
+	lighting_shader, ok := gl.load_shaders_source(lighting_vert, lighting_frag)
 	if !ok {
 		fmt.eprintln("Failed to create GLSL program")
 		return
@@ -189,8 +189,8 @@ main :: proc() {
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.UseProgram(program)
-	gl.Uniform1i(gl.GetUniformLocation(program, "ourTexture"), 0)
+	gl.UseProgram(lamp_shader)
+	gl.Uniform1i(gl.GetUniformLocation(lamp_shader, "ourTexture"), 0)
 
 	gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
@@ -239,7 +239,7 @@ main :: proc() {
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
 		// Lighting
-		gl.UseProgram(program_l)
+		gl.UseProgram(lighting_shader)
 
 		model := glm.mat4Translate(light_pos)
 		model *= glm.mat4Scale(0.2)
@@ -248,39 +248,39 @@ main :: proc() {
 		aspect_ratio := f32(WINDOW_WIDTH) / f32(WINDOW_HEIGHT)
 		proj := glm.mat4Perspective(radians(90), aspect_ratio, 0.1, 100)
 
-		program_set_vec3(program_l, "objectColor", 1, 0.5, 0.31)
-		program_set_vec3(program_l, "lightColor", 1, 1, 1)
-		program_set_vec3(program_l, "lightPos", light_pos)
+		program_set_vec3(lighting_shader, "objectColor", 1, 0.5, 0.31)
+		program_set_vec3(lighting_shader, "lightColor", 1, 1, 1)
+		program_set_vec3(lighting_shader, "lightPos", light_pos)
 
-		program_set_mat4(program_l, "view", &view[0, 0])
-		program_set_mat4(program_l, "projection", &proj[0, 0])
-		program_set_mat4(program_l, "model", &model[0, 0])
+		program_set_mat4(lighting_shader, "view", &view[0, 0])
+		program_set_mat4(lighting_shader, "projection", &proj[0, 0])
+		program_set_mat4(lighting_shader, "model", &model[0, 0])
 
 		gl.BindVertexArray(light_vao)
 		gl.DrawArrays(gl.TRIANGLES, 0, 36)
 
 		// Cubes
-		gl.UseProgram(program)
+		gl.UseProgram(lamp_shader)
 
-		program_set_vec3(program, "objectColor", 1, 0.5, 0.31)
-		program_set_vec3(program, "lightColor", 1, 1, 1)
+		program_set_vec3(lamp_shader, "objectColor", 1, 0.5, 0.31)
+		program_set_vec3(lamp_shader, "lightColor", 1, 1, 1)
 
-		program_set_mat4(program, "view", &view[0, 0])
-		program_set_mat4(program, "projection", &proj[0, 0])
+		program_set_mat4(lamp_shader, "view", &view[0, 0])
+		program_set_mat4(lamp_shader, "projection", &proj[0, 0])
 
 		light_pos.x = 2 * sin(f32(ticks) / 400)
 		light_pos.y = 2 * sin(f32(ticks) / 500)
 		light_pos.z = 2 * cos(f32(ticks) / 400)
 
 		gl.BindVertexArray(vao)
-		program_set_vec3(program, "lightPos", light_pos)
-		program_set_vec3(program, "viewPos", camera.position)
+		program_set_vec3(lamp_shader, "lightPos", light_pos)
+		program_set_vec3(lamp_shader, "viewPos", camera.position)
 		for &pos, i in &cube_positions {
 			angle := f32(ticks) / 20.0 * f32(i)
 			model := glm.mat4Translate(pos)
 			// model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
 
-			program_set_mat4(program, "model", &model[0, 0])
+			program_set_mat4(lamp_shader, "model", &model[0, 0])
 
 			gl.DrawArrays(gl.TRIANGLES, 0, 36)
 		}

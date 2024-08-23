@@ -109,7 +109,7 @@ main :: proc() {
 	lighting_vert := string(#load("../shader/light.vert.glsl"))
 	lighting_frag := string(#load("../shader/light.frag.glsl"))
 
-	lamp_shader, program_ok := gl.load_shaders_source(vert, frag)
+	mat_shader, program_ok := gl.load_shaders_source(vert, frag)
 	if !program_ok {
 		fmt.eprintln("Failed to create GLSL program")
 		return
@@ -189,8 +189,8 @@ main :: proc() {
 	gl.ActiveTexture(gl.TEXTURE0)
 	gl.BindTexture(gl.TEXTURE_2D, texture)
 
-	gl.UseProgram(lamp_shader)
-	gl.Uniform1i(gl.GetUniformLocation(lamp_shader, "ourTexture"), 0)
+	gl.UseProgram(mat_shader)
+	gl.Uniform1i(gl.GetUniformLocation(mat_shader, "ourTexture"), 0)
 
 	gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
@@ -264,15 +264,20 @@ main :: proc() {
 		gl.DrawArrays(gl.TRIANGLES, 0, 36)
 
 		// Cubes
-		gl.UseProgram(lamp_shader)
+		gl.UseProgram(mat_shader)
 
-		program_set_vec3(lamp_shader, "objectColor", 1, 0.5, 0.31)
-		program_set_vec3(lamp_shader, "lightColor", 1, 1, 1)
-		program_set_vec3(lamp_shader, "lightPos", light_pos)
-		program_set_vec3(lamp_shader, "viewPos", camera.position)
+		program_set_vec3(mat_shader, "objectColor", 1, 0.5, 0.31)
+		program_set_vec3(mat_shader, "lightColor", 1, 1, 1)
+		program_set_vec3(mat_shader, "lightPos", light_pos)
+		program_set_vec3(mat_shader, "viewPos", camera.position)
 
-		program_set_mat4(lamp_shader, "view", &view[0, 0])
-		program_set_mat4(lamp_shader, "projection", &proj[0, 0])
+		program_set_vec3(mat_shader, "material.ambient", 1.0, 0.5, 0.31)
+		program_set_vec3(mat_shader, "material.diffuse", 1.0, 0.5, 0.31)
+		program_set_vec3(mat_shader, "material.specular", 0.5, 0.5, 0.5)
+		program_set_float(mat_shader, "material.shininess", 32.0)
+
+		program_set_mat4(mat_shader, "view", &view[0, 0])
+		program_set_mat4(mat_shader, "projection", &proj[0, 0])
 
 		gl.BindVertexArray(vao)
 		for &pos, i in &cube_positions {
@@ -280,7 +285,7 @@ main :: proc() {
 			model := glm.mat4Translate(pos)
 			model *= glm.mat4Rotate({1, 0.3, 0.5}, radians(angle) / 5)
 
-			program_set_mat4(lamp_shader, "model", &model[0, 0])
+			program_set_mat4(mat_shader, "model", &model[0, 0])
 
 			gl.DrawArrays(gl.TRIANGLES, 0, 36)
 		}
@@ -305,4 +310,8 @@ program_set_vec3 :: proc{program_set_vec3_i3, program_set_vec3_vec3}
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
 	gl.UniformMatrix4fv(gl.GetUniformLocation(program, location), 1, gl.FALSE, value)
+}
+
+program_set_float :: proc(program: u32, location: cstring, value: f32) {
+	gl.Uniform1f(gl.GetUniformLocation(program, location), value)
 }

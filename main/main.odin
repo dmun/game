@@ -276,6 +276,10 @@ main :: proc() {
 		program_set_vec3(mat_shader, "material.specular", 0.5, 0.5, 0.5)
 		program_set_float(mat_shader, "material.shininess", 32.0)
 
+		program_set_vec3(mat_shader, "light.ambient",  0.2, 0.2, 0.2)
+		program_set_vec3(mat_shader, "light.diffuse",  0.5, 0.5, 0.5)
+		program_set_vec3(mat_shader, "light.specular", 1.0, 1.0, 1.0)
+
 		program_set_mat4(mat_shader, "view", &view[0, 0])
 		program_set_mat4(mat_shader, "projection", &proj[0, 0])
 

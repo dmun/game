@@ -90,7 +90,7 @@ main :: proc() {
 		SDL.WINDOWPOS_CENTERED,
 		WINDOW_WIDTH,
 		WINDOW_HEIGHT,
-		SDL.WINDOW_OPENGL | SDL.WINDOW_RESIZABLE,
+		SDL.WINDOW_OPENGL,
 	)
 	assert(window != nil, SDL.GetErrorString())
 	defer SDL.DestroyWindow(window)
@@ -269,7 +269,6 @@ main :: proc() {
 		program_set_vec3(mat_shader, "objectColor", 1, 0.5, 0.31)
 		program_set_vec3(mat_shader, "lightColor", 1, 1, 1)
 		program_set_vec3(mat_shader, "lightPos", light_pos)
-		program_set_vec3(mat_shader, "viewPos", camera.position)
 
 		program_set_vec3(mat_shader, "material.ambient", 1.0, 0.5, 0.31)
 		program_set_vec3(mat_shader, "material.diffuse", 1.0, 0.5, 0.31)

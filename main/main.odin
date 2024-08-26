@@ -244,9 +244,9 @@ main :: proc() {
 		light_pos.y = 2 * sin(f32(ticks) / 500)
 		light_pos.z = 2 * cos(f32(ticks) / 400)
 
-		light_color.r = sin(f32(ticks) / 1000)
-		light_color.g = sin(f32(ticks) / 600)
-		light_color.b = sin(f32(ticks) / 300)
+		// light_color.r = sin(f32(ticks) / 1000)
+		// light_color.g = sin(f32(ticks) / 600)
+		// light_color.b = sin(f32(ticks) / 300)
 
 		// Lighting
 		gl.UseProgram(lighting_shader)
@@ -275,16 +275,18 @@ main :: proc() {
 		program_set_vec3(mat_shader, "objectColor", 1, 0.5, 0.31)
 		program_set_vec3(mat_shader, "lightPos", light_pos)
 
-		program_set_vec3(mat_shader, "material.ambient", 1.0, 0.5, 0.31)
-		program_set_vec3(mat_shader, "material.diffuse", 1.0, 0.5, 0.31)
-		program_set_vec3(mat_shader, "material.specular", 0.5, 0.5, 0.5)
+		ambient_color := vec3{0.0215, 0.1745, 0.0215}
+		diffuse_color := vec3{0.07568, 0.61424, 0.07568}
+		specular_color := vec3{0.633, 0.727811, 0.633}
+		shininess := 0.6
+
+		program_set_vec3(mat_shader, "material.ambient", ambient_color)
+		program_set_vec3(mat_shader, "material.diffuse", diffuse_color)
+		program_set_vec3(mat_shader, "material.specular", specular_color)
 		program_set_float(mat_shader, "material.shininess", 32.0)
 
-		diffuse_color := light_color * vec3(0.5)
-		ambient_color := diffuse_color * vec3(0.2)
-
-		program_set_vec3(mat_shader, "light.ambient",  ambient_color)
-		program_set_vec3(mat_shader, "light.diffuse",  diffuse_color)
+		program_set_vec3(mat_shader, "light.ambient",  vec3(0.2))
+		program_set_vec3(mat_shader, "light.diffuse",  vec3(0.5))
 		program_set_vec3(mat_shader, "light.specular", vec3(1))
 
 		program_set_mat4(mat_shader, "view", &view[0, 0])

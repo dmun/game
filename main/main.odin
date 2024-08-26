@@ -206,6 +206,8 @@ main :: proc() {
 	last_tick := u32(0)
 	MAX_FPS :: 250
 
+	light_color := vec3(1)
+
 	loop: for {
 		ticks := SDL.GetTicks()
 		t := f32(ticks) / 1000
@@ -242,6 +244,10 @@ main :: proc() {
 		light_pos.y = 2 * sin(f32(ticks) / 500)
 		light_pos.z = 2 * cos(f32(ticks) / 400)
 
+		light_color.r = sin(f32(ticks) / 1000)
+		light_color.g = sin(f32(ticks) / 600)
+		light_color.b = sin(f32(ticks) / 300)
+
 		// Lighting
 		gl.UseProgram(lighting_shader)
 
@@ -253,7 +259,7 @@ main :: proc() {
 		proj := glm.mat4Perspective(radians(90), aspect_ratio, 0.1, 100)
 
 		program_set_vec3(lighting_shader, "objectColor", 1, 0.5, 0.31)
-		program_set_vec3(lighting_shader, "lightColor", 1, 1, 1)
+		program_set_vec3(lighting_shader, "lightColor", light_color)
 		program_set_vec3(lighting_shader, "lightPos", light_pos)
 
 		program_set_mat4(lighting_shader, "view", &view[0, 0])
@@ -267,7 +273,6 @@ main :: proc() {
 		gl.UseProgram(mat_shader)
 
 		program_set_vec3(mat_shader, "objectColor", 1, 0.5, 0.31)
-		program_set_vec3(mat_shader, "lightColor", 1, 1, 1)
 		program_set_vec3(mat_shader, "lightPos", light_pos)
 
 		program_set_vec3(mat_shader, "material.ambient", 1.0, 0.5, 0.31)
@@ -275,9 +280,12 @@ main :: proc() {
 		program_set_vec3(mat_shader, "material.specular", 0.5, 0.5, 0.5)
 		program_set_float(mat_shader, "material.shininess", 32.0)
 
-		program_set_vec3(mat_shader, "light.ambient",  0.2, 0.2, 0.2)
-		program_set_vec3(mat_shader, "light.diffuse",  0.5, 0.5, 0.5)
-		program_set_vec3(mat_shader, "light.specular", 1.0, 1.0, 1.0)
+		diffuse_color := light_color * vec3(0.5)
+		ambient_color := diffuse_color * vec3(0.2)
+
+		program_set_vec3(mat_shader, "light.ambient",  ambient_color)
+		program_set_vec3(mat_shader, "light.diffuse",  diffuse_color)
+		program_set_vec3(mat_shader, "light.specular", vec3(1))
 
 		program_set_mat4(mat_shader, "view", &view[0, 0])
 		program_set_mat4(mat_shader, "projection", &proj[0, 0])

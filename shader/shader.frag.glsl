@@ -5,10 +5,10 @@ in vec3 LightingColor;
 in vec3 Normal;
 in vec3 FragPos;
 in vec3 LightPos;
+in vec2 TexCoords;
 
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
+    sampler2D diffuse;
     vec3 specular;
     float shininess;
 };
@@ -27,12 +27,12 @@ uniform Light light;
 
 void main()
 {
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(LightPos - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * material.diffuse * diff;
+    vec3 diffuse = light.diffuse * vec3(texture(material.diffuse, TexCoords)) * diff;
 
     vec3 viewDir = normalize(-FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);  

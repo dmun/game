@@ -263,6 +263,11 @@ main :: proc() {
 		program_set_vec3(mat_shader, "light.ambient", vec3(0.2))
 		program_set_vec3(mat_shader, "light.diffuse", vec3(0.5))
 		program_set_vec3(mat_shader, "light.specular", vec3(1))
+		// program_set_vec3(mat_shader, "light.direction", -0.2, -1, -0.3)
+
+		program_set_float(mat_shader, "light.constant", 1.0)
+		program_set_float(mat_shader, "light.linear", 0.09)
+		program_set_float(mat_shader, "light.quadratic", 0.032)
 
 		program_set_mat4(mat_shader, "view", &view[0, 0])
 		program_set_mat4(mat_shader, "projection", &proj[0, 0])
@@ -303,6 +308,14 @@ program_set_vec3_vec3 :: proc(program: u32, location: cstring, v: vec3) {
 program_set_vec3 :: proc {
 	program_set_vec3_i3,
 	program_set_vec3_vec3,
+}
+
+program_set_vec4_vec4 :: proc(program: u32, location: cstring, v1, v2, v3, v4: f32) {
+	gl.Uniform4f(gl.GetUniformLocation(program, location), v1, v2, v3, v4)
+}
+
+program_set_vec4 :: proc {
+	program_set_vec4_vec4,
 }
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {

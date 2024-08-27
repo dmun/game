@@ -218,9 +218,9 @@ main :: proc() {
 
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 
-		light_pos.x = 2 * sin(f32(ticks) / 400)
-		light_pos.y = 2 * sin(f32(ticks) / 500)
-		light_pos.z = 2 * cos(f32(ticks) / 400)
+		// light_pos.x = 2 * sin(f32(ticks) / 400)
+		// light_pos.y = 2 * sin(f32(ticks) / 500)
+		// light_pos.z = 2 * cos(f32(ticks) / 400)
 
 		// light_color.r = sin(f32(ticks) / 1000)
 		// light_color.g = sin(f32(ticks) / 600)
@@ -238,7 +238,7 @@ main :: proc() {
 
 		program_set_vec3(lighting_shader, "objectColor", 1, 0.5, 0.31)
 		program_set_vec3(lighting_shader, "lightColor", light_color)
-		program_set_vec3(lighting_shader, "lightPos", light_pos)
+		program_set_vec3(lighting_shader, "lightPos", camera.position)
 
 		program_set_mat4(lighting_shader, "view", &view[0, 0])
 		program_set_mat4(lighting_shader, "projection", &proj[0, 0])
@@ -263,11 +263,14 @@ main :: proc() {
 		program_set_vec3(mat_shader, "light.ambient", vec3(0.2))
 		program_set_vec3(mat_shader, "light.diffuse", vec3(0.5))
 		program_set_vec3(mat_shader, "light.specular", vec3(1))
-		// program_set_vec3(mat_shader, "light.direction", -0.2, -1, -0.3)
 
 		program_set_float(mat_shader, "light.constant", 1.0)
 		program_set_float(mat_shader, "light.linear", 0.09)
 		program_set_float(mat_shader, "light.quadratic", 0.032)
+
+		program_set_vec3(mat_shader, "light.position", camera.position)
+		program_set_vec3(mat_shader, "light.direction", camera.direction)
+		program_set_float(mat_shader, "light.cutOff", cos(radians(12.5)))
 
 		program_set_mat4(mat_shader, "view", &view[0, 0])
 		program_set_mat4(mat_shader, "projection", &proj[0, 0])

@@ -164,43 +164,15 @@ main :: proc() {
 	IMG.Init({.JPG, .PNG})
 	defer IMG.Quit()
 
-	texture: u32
-	gl.GenTextures(1, &texture)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
-
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-
-	surface := SDL.ConvertSurfaceFormat(
-		IMG.Load("image/container2.png"),
-		u32(SDL.PixelFormatEnum.RGB24),
-		0,
-	)
-
-	gl.TexImage2D(
-		gl.TEXTURE_2D,
-		0,
-		gl.RGB,
-		surface.w,
-		surface.h,
-		0,
-		gl.RGB,
-		gl.UNSIGNED_BYTE,
-		surface.pixels,
-	)
-	gl.GenerateMipmap(gl.TEXTURE_2D)
-
-	gl.ActiveTexture(gl.TEXTURE0)
-	gl.BindTexture(gl.TEXTURE_2D, texture)
+	diffuse_map := load_texture("image/container2.png")
+	specular_map := load_texture("image/container2_specular.png")
 
 	gl.UseProgram(mat_shader)
-	gl.Uniform1i(gl.GetUniformLocation(mat_shader, "material.diffuse"), 0)
+	program_set_int(mat_shader, "material.diffuse", 0)
+	program_set_int(mat_shader, "material.specular", 1)
 
 	gl.Viewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)
 	gl.ClearColor(0.1, 0.1, 0.1, 1)
-	// gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 
 	camera: Camera
 	yaw: f32 = 90
@@ -286,17 +258,20 @@ main :: proc() {
 		specular_color := vec3{0.633, 0.727811, 0.633}
 		shininess := 0.6
 
-		program_set_vec3(mat_shader, "material.ambient", ambient_color)
-		program_set_vec3(mat_shader, "material.diffuse", diffuse_color)
-		program_set_vec3(mat_shader, "material.specular", specular_color)
 		program_set_float(mat_shader, "material.shininess", 32.0)
 
-		program_set_vec3(mat_shader, "light.ambient",  vec3(0.2))
-		program_set_vec3(mat_shader, "light.diffuse",  vec3(0.5))
+		program_set_vec3(mat_shader, "light.ambient", vec3(0.2))
+		program_set_vec3(mat_shader, "light.diffuse", vec3(0.5))
 		program_set_vec3(mat_shader, "light.specular", vec3(1))
 
 		program_set_mat4(mat_shader, "view", &view[0, 0])
 		program_set_mat4(mat_shader, "projection", &proj[0, 0])
+
+		gl.ActiveTexture(gl.TEXTURE0)
+		gl.BindTexture(gl.TEXTURE_2D, diffuse_map)
+
+		gl.ActiveTexture(gl.TEXTURE1)
+		gl.BindTexture(gl.TEXTURE_2D, specular_map)
 
 		gl.BindVertexArray(vao)
 		for &pos, i in &cube_positions {
@@ -325,7 +300,10 @@ program_set_vec3_vec3 :: proc(program: u32, location: cstring, v: vec3) {
 	gl.Uniform3f(gl.GetUniformLocation(program, location), v.x, v.y, v.z)
 }
 
-program_set_vec3 :: proc{program_set_vec3_i3, program_set_vec3_vec3}
+program_set_vec3 :: proc {
+	program_set_vec3_i3,
+	program_set_vec3_vec3,
+}
 
 program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
 	gl.UniformMatrix4fv(gl.GetUniformLocation(program, location), 1, gl.FALSE, value)
@@ -333,4 +311,40 @@ program_set_mat4 :: proc(program: u32, location: cstring, value: [^]f32) {
 
 program_set_float :: proc(program: u32, location: cstring, value: f32) {
 	gl.Uniform1f(gl.GetUniformLocation(program, location), value)
+}
+
+program_set_int :: proc(program: u32, location: cstring, value: i32) {
+	gl.Uniform1i(gl.GetUniformLocation(program, location), value)
+}
+
+load_texture :: proc(path: cstring) -> u32 {
+	texture_id: u32
+	gl.GenTextures(1, &texture_id)
+	gl.BindTexture(gl.TEXTURE_2D, texture_id)
+
+	surface := SDL.ConvertSurfaceFormat(
+		IMG.Load(path),
+		u32(SDL.PixelFormatEnum.RGB24),
+		0,
+	)
+
+	gl.TexImage2D(
+		gl.TEXTURE_2D,
+		0,
+		gl.RGB,
+		surface.w,
+		surface.h,
+		0,
+		gl.RGB,
+		gl.UNSIGNED_BYTE,
+		surface.pixels,
+	)
+	gl.GenerateMipmap(gl.TEXTURE_2D)
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.MIRRORED_REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.MIRRORED_REPEAT)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+
+	return texture_id
 }
